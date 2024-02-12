@@ -3,8 +3,7 @@
 
 use defmt::*;
 use defmt_rtt as _;
-use embedded_hal::blocking::delay::DelayMs;
-use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::v2::{InputPin, OutputPin};
 use hal::pac;
 use panic_probe as _;
 use rp2040_hal as hal;
@@ -18,13 +17,11 @@ const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
 #[rp2040_hal::entry]
 fn main() -> ! {
-    info!("Program start!");
-
     let mut pac = pac::Peripherals::take().unwrap();
 
     let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
 
-    let clocks = hal::clocks::init_clocks_and_plls(
+    let _clocks = hal::clocks::init_clocks_and_plls(
         XTAL_FREQ_HZ,
         pac.XOSC,
         pac.CLOCKS,
@@ -35,8 +32,6 @@ fn main() -> ! {
     )
     .ok()
     .unwrap();
-
-    let mut timer = rp2040_hal::Timer::new(pac.TIMER, &mut pac.RESETS, &clocks);
 
     let sio = hal::Sio::new(pac.SIO);
 
@@ -50,10 +45,25 @@ fn main() -> ! {
     // Red LED: GPIO23
     let mut red_led = pins.gpio23.into_push_pull_output();
 
+    // Button: GPIO0
+    let button = pins.gpio0.into_pull_up_input();
+
+    let mut cnt = 0;
+
     loop {
-        red_led.set_high().unwrap();
-        timer.delay_ms(1000);
-        red_led.set_low().unwrap();
-        timer.delay_ms(1000);
+        if button.is_low().unwrap() {
+            if cnt == 0 {
+                info!("button start");
+            }
+            cnt += 1;
+            red_led.set_high().unwrap();
+        } else {
+            if cnt != 0 {
+                info!("cnt:{}", cnt);
+                info!("button end");
+                cnt = 0;
+            }
+            red_led.set_low().unwrap();
+        }
     }
 }

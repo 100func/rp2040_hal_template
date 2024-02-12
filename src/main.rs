@@ -15,15 +15,18 @@ pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_GENERIC_03H;
     dispatchers = [TIMER_IRQ_1]
 )]
 mod app {
-    use defmt::info;
-    use embedded_hal::digital::v2::{InputPin, ToggleableOutputPin};
+    use defmt::*;
+    use defmt_rtt as _;
+    use embedded_hal::digital::v2::{InputPin, OutputPin};
     use hal::gpio;
+    use panic_probe as _;
     use rp2040_hal as hal;
     use rtic_monotonics::rp2040::*;
 
-    type RedLedPin = gpio::Pin<gpio::bank0::Gpio23, gpio::FunctionSioOutput, gpio::PullDown>;
-    type OrangeLedPin = gpio::Pin<gpio::bank0::Gpio24, gpio::FunctionSioOutput, gpio::PullDown>;
-    type ButtonPin = gpio::Pin<gpio::bank0::Gpio0, gpio::FunctionSioInput, gpio::PullUp>;
+    type RedLed = gpio::Pin<gpio::bank0::Gpio23, gpio::FunctionSioOutput, gpio::PullDown>;
+    type OrangeLed = gpio::Pin<gpio::bank0::Gpio24, gpio::FunctionSioOutput, gpio::PullDown>;
+    type GreenLed = gpio::Pin<gpio::bank0::Gpio25, gpio::FunctionSioOutput, gpio::PullDown>;
+    type Button = gpio::Pin<gpio::bank0::Gpio0, gpio::FunctionSioInput, gpio::PullUp>;
 
     const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
@@ -32,9 +35,10 @@ mod app {
 
     #[local]
     struct Local {
-        led: RedLedPin,
-        orange_led: OrangeLedPin,
-        button: ButtonPin,
+        red_led: RedLed,
+        orange_led: OrangeLed,
+        green_led: GreenLed,
+        button: Button,
     }
 
     #[init(local=[])]
@@ -44,6 +48,7 @@ mod app {
         Timer::start(ctx.device.TIMER, &mut ctx.device.RESETS, rp2040_timer_token);
 
         let mut watchdog = hal::Watchdog::new(ctx.device.WATCHDOG);
+
         let _clocks = hal::clocks::init_clocks_and_plls(
             XTAL_FREQ_HZ,
             ctx.device.XOSC,
@@ -63,66 +68,66 @@ mod app {
             sio.gpio_bank0,
             &mut ctx.device.RESETS,
         );
-        let led = pins.gpio23.into_push_pull_output();
+        let red_led = pins.gpio23.into_push_pull_output();
         let orange_led = pins.gpio24.into_push_pull_output();
+        let green_led = pins.gpio25.into_push_pull_output();
 
-        let button = pins.gpio0.reconfigure();
+        let button = pins.gpio0.into_pull_up_input();
         button.set_interrupt_enabled(hal::gpio::Interrupt::EdgeLow, true);
 
-        heartbeat::spawn().ok();
-        heartbeat2::spawn().ok();
+        switch_blink::spawn().ok();
+        green_lamp::spawn().ok();
 
         (
             Shared {},
             Local {
-                led,
+                red_led,
                 orange_led,
+                green_led,
                 button,
             },
         )
     }
 
-    #[task(local = [led])]
-    async fn heartbeat(ctx: heartbeat::Context) {
-        let mut cnt = 0;
+    #[task(local = [red_led, orange_led])]
+    async fn switch_blink(ctx: switch_blink::Context) {
+        let red_led = ctx.local.red_led;
+        let orange_led = ctx.local.orange_led;
+
         loop {
-            _ = ctx.local.led.toggle();
-            Timer::delay(1000.millis()).await;
-            info!("red {}", cnt);
-            if cnt == 100 {
-                cnt = 0
-            } else {
-                cnt += 1
-            }
+            red_led.set_high().unwrap();
+            Timer::delay(500.millis()).await;
+            red_led.set_low().unwrap();
+            Timer::delay(500.millis()).await;
+
+            orange_led.set_high().unwrap();
+            Timer::delay(500.millis()).await;
+            orange_led.set_low().unwrap();
+            Timer::delay(500.millis()).await;
         }
     }
 
-    #[task(local = [orange_led])]
-    async fn heartbeat2(ctx: heartbeat2::Context) {
+    #[task(local = [green_led, button])]
+    async fn green_lamp(ctx: green_lamp::Context) {
         let mut cnt = 0;
+        let green_led = ctx.local.green_led;
+        let button = ctx.local.button;
         loop {
-            _ = ctx.local.orange_led.toggle();
-            Timer::delay(1000.millis()).await;
-            info!("orange {}", cnt);
-            if cnt == 100 {
-                cnt = 0
+            if button.is_low().unwrap() {
+                if cnt == 0 {
+                    info!("button start");
+                }
+                cnt += 1;
+                green_led.set_high().unwrap();
             } else {
-                cnt += 1
+                if cnt != 0 {
+                    info!("cnt:{}", cnt);
+                    info!("button end");
+                    cnt = 0;
+                }
+                green_led.set_low().unwrap();
             }
+            Timer::delay(1.millis()).await;
         }
-    }
-
-    #[task(binds = IO_IRQ_BANK0, local = [button])]
-    fn interrupt_button(ctx: interrupt_button::Context) {
-        if ctx
-            .local
-            .button
-            .interrupt_status(hal::gpio::Interrupt::EdgeLow)
-        {
-            info!("hello");
-        }
-        ctx.local
-            .button
-            .clear_interrupt(hal::gpio::Interrupt::EdgeLow);
     }
 }

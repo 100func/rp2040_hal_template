@@ -3,11 +3,13 @@
 
 use defmt::*;
 use defmt_rtt as _;
-use embedded_hal::blocking::delay::DelayMs;
-use embedded_hal::digital::v2::OutputPin;
-use hal::pac;
 use panic_probe as _;
 use rp2040_hal as hal;
+
+use hal::pac;
+
+use embedded_hal::blocking::delay::DelayMs;
+use embedded_hal::digital::v2::{InputPin, OutputPin};
 
 // bootloader code
 #[link_section = ".boot2"]
@@ -19,7 +21,6 @@ const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 #[rp2040_hal::entry]
 fn main() -> ! {
     info!("Program start!");
-
     let mut pac = pac::Peripherals::take().unwrap();
 
     let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
@@ -48,12 +49,30 @@ fn main() -> ! {
     );
 
     // Red LED: GPIO23
+    // Orange LED: GPIO24
+    // Green LED: GPIO25
     let mut red_led = pins.gpio23.into_push_pull_output();
+    let mut orange_led = pins.gpio24.into_push_pull_output();
+    let mut green_led = pins.gpio25.into_push_pull_output();
 
     loop {
+        info!("green");
+        green_led.set_high().unwrap();
+        timer.delay_ms(2000);
+        green_led.set_low().unwrap();
+
+        info!("orange");
+        for _ in 1..4 {
+            orange_led.set_high().unwrap();
+            timer.delay_ms(500);
+            orange_led.set_low().unwrap();
+            timer.delay_ms(500);
+        }
+        orange_led.set_low().unwrap();
+
+        info!("red");
         red_led.set_high().unwrap();
-        timer.delay_ms(1000);
+        timer.delay_ms(2000);
         red_led.set_low().unwrap();
-        timer.delay_ms(1000);
     }
 }

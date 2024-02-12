@@ -50,10 +50,18 @@ fn main() -> ! {
     // Red LED: GPIO23
     let mut red_led = pins.gpio23.into_push_pull_output();
 
+    // Orange LED: GPIO24
+    let mut orange_led = pins.gpio24.into_push_pull_output();
+
     loop {
         red_led.set_high().unwrap();
-        timer.delay_ms(1000);
+        timer.delay_ms(500);
         red_led.set_low().unwrap();
-        timer.delay_ms(1000);
+        timer.delay_ms(500);
+
+        orange_led.set_high().unwrap();
+        timer.delay_ms(500);
+        orange_led.set_low().unwrap();
+        timer.delay_ms(500);
     }
 }

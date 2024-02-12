@@ -2,14 +2,12 @@
 #![no_main]
 #![feature(type_alias_impl_trait)]
 
-// Alias for our HAL crate
 use defmt::*;
 use defmt_rtt as _;
+use embedded_hal::adc::OneShot;
 use hal::Clock;
 use panic_probe as _;
 use rp2040_hal as hal;
-
-use embedded_hal::adc::OneShot;
 
 const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
