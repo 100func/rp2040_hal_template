@@ -119,7 +119,7 @@ mod app {
                 .button
                 .lock(|button| button_is_low = (*button).is_low().unwrap());
             cnt += 1;
-            Timer::delay(100.millis()).await;
+            Timer::delay(1.millis()).await;
         }
         info!("cnt:{}", cnt);
         info!("button end");
