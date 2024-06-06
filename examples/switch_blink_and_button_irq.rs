@@ -94,12 +94,12 @@ fn main() -> ! {
 
 #[interrupt]
 fn IO_IRQ_BANK0() {
-    static mut REDLED_AND_BUTTON: Option<GreenLedAndButton> = None;
-    static mut CNT: u32 = 0;
+    static mut GREENLED_AND_BUTTON: Option<GreenLedAndButton> = None;
+    let mut cnt = 0;
 
-    if REDLED_AND_BUTTON.is_none() {
+    if GREENLED_AND_BUTTON.is_none() {
         critical_section::with(|cs| {
-            *REDLED_AND_BUTTON = GLOBAL_PINS.borrow(cs).take();
+            *GREENLED_AND_BUTTON = GLOBAL_PINS.borrow(cs).take();
         })
     }
 
@@ -108,12 +108,12 @@ fn IO_IRQ_BANK0() {
         if button.interrupt_status(EdgeLow) {
             green_led.set_high().unwrap();
             while button.is_low().unwrap() {
-                *CNT += 1;
+                cnt += 1;
                 info!("button start");
             }
             info!("cnt:{}", CNT);
             info!("button end");
-            *CNT = 0;
+            cnt = 0;
             green_led.set_low().unwrap();
 
             button.clear_interrupt(EdgeLow);

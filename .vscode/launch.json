@@ -9,7 +9,6 @@
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "chip": "rp2040",
-            // RP2040 doesn't support connectUnderReset
             "connectUnderReset": false,
             "speed": 4000,
             "runtimeExecutable": "probe-rs",
@@ -18,20 +17,13 @@
             ],
             "flashingConfig": {
                 "flashingEnabled": true,
-                "resetAfterFlashing": true,
                 "haltAfterReset": true,
             },
             "coreConfigs": [
                 {
                     "coreIndex": 0,
-                    "programBinary": "target/thumbv6m-none-eabi/debug/{{crate_name}}",
-                    "chip": "RP2040",
+                    "programBinary": "target/thumbv6m-none-eabi/debug/rp2040_example",
                     "rttEnabled": true,
-                    "options": {
-                        "env": {
-                            "DEFMT_LOG": "debug"
-                        }
-                    },
                 }
             ],
             "consoleLogLevel": "Info", //Error, Warn, Info, Debug, Trace
