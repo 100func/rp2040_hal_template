@@ -68,6 +68,7 @@ mod app {
             sio.gpio_bank0,
             &mut ctx.device.RESETS,
         );
+        // LED:GPIO0(Green), GPIO2(RED), Button:GPIO1
         let red_led = pins.gpio23.into_push_pull_output();
         let orange_led = pins.gpio24.into_push_pull_output();
         let green_led = pins.gpio25.into_push_pull_output();

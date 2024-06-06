@@ -1,3 +1,4 @@
+// traffic_light.rs
 #![no_std]
 #![no_main]
 
@@ -9,7 +10,7 @@ use rp2040_hal as hal;
 use hal::pac;
 
 use embedded_hal::blocking::delay::DelayMs;
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::digital::v2::OutputPin;
 
 // bootloader code
 #[link_section = ".boot2"]
@@ -48,12 +49,10 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
-    // Red LED: GPIO23
-    // Orange LED: GPIO24
-    // Green LED: GPIO25
-    let mut red_led = pins.gpio23.into_push_pull_output();
-    let mut orange_led = pins.gpio24.into_push_pull_output();
-    let mut green_led = pins.gpio25.into_push_pull_output();
+    // LED:GPIO22(Green), GPIO21(orange), GPIO20(RED)
+    let mut green_led = pins.gpio22.into_push_pull_output();
+    let mut orange_led = pins.gpio21.into_push_pull_output();
+    let mut red_led = pins.gpio20.into_push_pull_output();
 
     loop {
         info!("green");

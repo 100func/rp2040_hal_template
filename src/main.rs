@@ -48,11 +48,7 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
-    // Red LED: GPIO23
-    // Orange LED: GPIO24
-    // Green LED: GPIO25
-    let mut red_led = pins.gpio20.into_push_pull_output();
-    let mut orange_led = pins.gpio21.into_push_pull_output();
+    // LED:GPIO22(Green)
     let mut green_led = pins.gpio22.into_push_pull_output();
 
     loop {
@@ -60,19 +56,5 @@ fn main() -> ! {
         green_led.set_high().unwrap();
         timer.delay_ms(2000);
         green_led.set_low().unwrap();
-
-        info!("orange");
-        for _ in 1..4 {
-            orange_led.set_high().unwrap();
-            timer.delay_ms(500);
-            orange_led.set_low().unwrap();
-            timer.delay_ms(500);
-        }
-        orange_led.set_low().unwrap();
-
-        info!("red");
-        red_led.set_high().unwrap();
-        timer.delay_ms(2000);
-        red_led.set_low().unwrap();
     }
 }
