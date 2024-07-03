@@ -1,24 +1,29 @@
 // traffic_light_button_rtic.rs
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 use defmt_rtt as _;
 use panic_probe as _;
-use rtic_monotonics::rp2040::prelude::*;
-
-rp2040_timer_monotonic!(Mono);
 
 // bootloader code
 #[link_section = ".boot2"]
 #[used]
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_GENERIC_03H;
 
-#[rtic::app(device = hal::pac)]
+const XTAL_FREQ_HZ: u32 = 12_000_000u32;
+
+#[rtic::app(
+    device = hal::pac,
+    dispatchers = [TIMER_IRQ_1],
+)]
 mod app {
-    const XTAL_FREQ_HZ: u32 = 12_000_000u32;
-    use defmt::*;
-    use embedded_hal::digital::OutputPin;
+    use defmt::info;
+    use embedded_hal::digital::v2::OutputPin;
     use rp2040_hal as hal;
+    use rtic_monotonics::rp2040::*;
+
+    use crate::XTAL_FREQ_HZ;
 
     #[shared]
     struct Shared {}
@@ -49,7 +54,8 @@ mod app {
 
     #[init]
     fn init(mut ctx: init::Context) -> (Shared, Local) {
-        Mono::start(ctx.device.TIMER, &mut ctx.device.RESETS);
+        let timer_token = rtic_monotonics::create_rp2040_monotonic_token!();
+        Timer::start(ctx.device.TIMER, &mut ctx.device.RESETS, timer_token);
         let mut watchdog = hal::Watchdog::new(ctx.device.WATCHDOG);
 
         let _clocks = hal::clocks::init_clocks_and_plls(
@@ -108,14 +114,14 @@ mod app {
         red_led.set_low().unwrap();
 
         green_led.set_high().unwrap();
-        Mono::delay(2000.millis()).await;
+        Timer::delay(2000.millis()).await;
         green_led.set_low().unwrap();
 
         for _ in 1..4 {
             orange_led.set_high().unwrap();
-            Mono::delay(500.millis()).await;
+            Timer::delay(500.millis()).await;
             orange_led.set_low().unwrap();
-            Mono::delay(500.millis()).await;
+            Timer::delay(500.millis()).await;
         }
         orange_led.set_low().unwrap();
         red_led.set_high().unwrap();
@@ -127,7 +133,7 @@ mod app {
         let button = ctx.local.button;
         if button.interrupt_status(hal::gpio::Interrupt::EdgeLow) {
             change_lights::spawn().unwrap();
-            button.clear_interrupt(hal::gpio::Interrupt::EdgeLow);
+            button.clear_interrupt(hal::gpio::Interrupt::EdgeLow)
         }
     }
 }

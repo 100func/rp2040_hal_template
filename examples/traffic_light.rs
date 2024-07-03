@@ -12,7 +12,6 @@ use hal::pac;
 use embedded_hal::blocking::delay::DelayMs;
 use embedded_hal::digital::v2::OutputPin;
 
-// bootloader code
 #[link_section = ".boot2"]
 #[used]
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_GENERIC_03H;
@@ -49,7 +48,6 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
-    // LED:GPIO22(Green), GPIO21(orange), GPIO20(RED)
     let mut green_led = pins.gpio22.into_push_pull_output();
     let mut orange_led = pins.gpio21.into_push_pull_output();
     let mut red_led = pins.gpio20.into_push_pull_output();

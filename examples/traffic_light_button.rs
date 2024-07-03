@@ -1,13 +1,16 @@
+// traffic_light_button.rs
 #![no_std]
 #![no_main]
 
 use defmt::*;
 use defmt_rtt as _;
-use embedded_hal::blocking::delay::DelayMs;
-use embedded_hal::digital::v2::{InputPin, OutputPin};
-use hal::pac;
 use panic_probe as _;
 use rp2040_hal as hal;
+
+use hal::pac;
+
+use embedded_hal::blocking::delay::DelayMs;
+use embedded_hal::digital::v2::{InputPin, OutputPin};
 
 // bootloader code
 #[link_section = ".boot2"]
@@ -18,6 +21,7 @@ const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
 #[rp2040_hal::entry]
 fn main() -> ! {
+    info!("Program start!");
     let mut pac = pac::Peripherals::take().unwrap();
 
     let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
@@ -45,44 +49,34 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
-    // Red LED: GPIO23
-    let mut red_led = pins.gpio23.into_push_pull_output();
+    // LED:GPIO22(Green), GPIO21(orange), GPIO20(RED)
+    let mut green_led = pins.gpio22.into_push_pull_output();
+    let mut orange_led = pins.gpio21.into_push_pull_output();
+    let mut red_led = pins.gpio20.into_push_pull_output();
 
-    // Orange LED: GPIO24
-    let mut orange_led = pins.gpio24.into_push_pull_output();
-
-    // Green LED: GPIO25
-    let mut green_led = pins.gpio25.into_push_pull_output();
-
-    // Button: GPIO0
-    let button = pins.gpio0.into_pull_up_input();
-
-    let mut cnt = 0;
+    // Button:GPIO23
+    let button = pins.gpio23.into_pull_up_input();
 
     loop {
+        info!("red");
         red_led.set_high().unwrap();
-        timer.delay_ms(500);
-        red_led.set_low().unwrap();
-        timer.delay_ms(500);
-
-        orange_led.set_high().unwrap();
-        timer.delay_ms(500);
-        orange_led.set_low().unwrap();
-        timer.delay_ms(500);
+        timer.delay_ms(2000);
 
         if button.is_low().unwrap() {
-            if cnt == 0 {
-                info!("button start");
-            }
-            cnt += 1;
+            red_led.set_low().unwrap();
+            info!("green");
             green_led.set_high().unwrap();
-        } else {
-            if cnt != 0 {
-                info!("cnt:{}", cnt);
-                info!("button end");
-                cnt = 0;
-            }
+            timer.delay_ms(2000);
             green_led.set_low().unwrap();
+
+            info!("orange");
+            for _ in 1..4 {
+                orange_led.set_high().unwrap();
+                timer.delay_ms(500);
+                orange_led.set_low().unwrap();
+                timer.delay_ms(500);
+            }
+            orange_led.set_low().unwrap();
         }
     }
 }
