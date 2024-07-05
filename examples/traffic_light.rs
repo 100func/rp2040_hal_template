@@ -9,8 +9,8 @@ use rp2040_hal as hal;
 
 use hal::pac;
 
-use embedded_hal::blocking::delay::DelayMs;
-use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::delay::DelayNs;
+use embedded_hal::digital::OutputPin;
 
 #[link_section = ".boot2"]
 #[used]

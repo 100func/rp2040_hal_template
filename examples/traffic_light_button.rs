@@ -9,8 +9,8 @@ use rp2040_hal as hal;
 
 use hal::pac;
 
-use embedded_hal::blocking::delay::DelayMs;
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::delay::DelayNs;
+use embedded_hal::digital::{InputPin, OutputPin};
 
 // bootloader code
 #[link_section = ".boot2"]
@@ -55,7 +55,7 @@ fn main() -> ! {
     let mut red_led = pins.gpio20.into_push_pull_output();
 
     // Button:GPIO23
-    let button = pins.gpio23.into_pull_up_input();
+    let mut button = pins.gpio23.into_pull_up_input();
 
     loop {
         info!("red");
