@@ -1,0 +1,12 @@
+services:
+  rust:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: backer-link
+    container_name: backer-link-container
+    volumes:
+      - ./:/myproject
+    working_dir: /myproject
+    command: /bin/sh
+    tty: true

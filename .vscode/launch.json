@@ -1,33 +1,27 @@
-// The format of this file is specified in https://probe.rs/docs/tools/vscode/#start-a-debug-session-with-minimum-configuration
 {
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "probe-run",
+            // Configure a default build task for 'cargo build'
             "preLaunchTask": "rust: cargo build",
             "type": "probe-rs-debug",
             "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "chip": "rp2040",
-            "connectUnderReset": false,
+            "name": "probe_rs Server attach example",
+            "server": "host.docker.internal:50001",
             "speed": 4000,
-            "runtimeExecutable": "probe-rs",
-            "runtimeArgs": [
-                "dap-server"
-            ],
-            "flashingConfig": {
-                "flashingEnabled": true,
-                "haltAfterReset": true,
-            },
+            "chip": "RP2040",
             "coreConfigs": [
                 {
                     "coreIndex": 0,
-                    "programBinary": "target/thumbv6m-none-eabi/debug/rp2040_example",
-                    "rttEnabled": true,
+                    //!MODIFY
+                    // "programBinary": "/Users/tanakaikko/Desktop/rp2040_hal_template/target/thumbv6m-none-eabi/debug/rp2040_example",
+                    "programBinary": "${env:LOCAL_WORKSPACE_FOLDER}/target/thumbv6m-none-eabi/debug/rp2040_example",
                 }
             ],
-            "consoleLogLevel": "Info", //Error, Warn, Info, Debug, Trace
-            "wireProtocol": "Swd"
+            //!This won't take effect. Please set environment variables before launching `probe-rs dap-server`.
+            "env": {},
+            // Info, Debug
+            "consoleLogLevel": "Info"
         }
     ]
 }
